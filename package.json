@@ -1,25 +1,40 @@
 {
   "name": "paseo-antigravity",
   "version": "1.0.0",
-  "description": "Zero-dependency bridge connecting Google Antigravity 2.0 (agy) to the Paseo agent orchestrator",
+  "description": "Zero-dependency bridge connecting Google Antigravity 2.0 (agy) to the Paseo agent orchestrator and mobile app",
   "main": "bin/setup.js",
+  "type": "module",
   "bin": {
     "paseo-antigravity": "bin/setup.js"
   },
   "scripts": {
     "test": "node --test tests/*.test.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fuller/paseo-antigravity.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fuller/paseo-antigravity/issues"
+  },
+  "homepage": "https://github.com/fuller/paseo-antigravity#readme",
   "keywords": [
     "paseo",
     "antigravity",
     "agy",
     "google-antigravity",
+    "google",
+    "gemini",
     "acp",
-    "ai-agents"
+    "agent-client-protocol",
+    "agent",
+    "ai-agents",
+    "cli",
+    "llm",
+    "developer-tools"
   ],
   "author": "Andrew Fuller",
   "license": "MIT",
-  "type": "module",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
