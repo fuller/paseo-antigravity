@@ -1,0 +1,26 @@
+{
+  "name": "paseo-antigravity",
+  "version": "1.0.0",
+  "description": "Zero-dependency bridge connecting Google Antigravity 2.0 (agy) to the Paseo agent orchestrator",
+  "main": "bin/setup.js",
+  "bin": {
+    "paseo-antigravity": "bin/setup.js"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "paseo",
+    "antigravity",
+    "agy",
+    "google-antigravity",
+    "acp",
+    "ai-agents"
+  ],
+  "author": "Andrew Fuller",
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
