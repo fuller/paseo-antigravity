@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 agy-bridge.py - Lightweight, zero-dependency bridge between Paseo and Google Antigravity (agy).
-Handles flag normalization, background auto-syncing of newly released Gemini models, and stdio streaming.
+Handles flag normalization, execution mode translation (Plan, Auto, Bypass, Accept Edits),
+background auto-syncing of newly released Gemini models, and stdio streaming.
 """
 
 import sys
@@ -102,7 +103,7 @@ def normalize_args(raw_args):
             i += 1
             continue
         
-        # Strip input-format flag (space-separated or '=' separated)
+        # Strip input-format flag
         if arg in ["-input-format", "--input-format"]:
             i += 2
             continue
@@ -110,6 +111,32 @@ def normalize_args(raw_args):
             i += 1
             continue
         
+        # Translate Paseo permission-mode flags to native agy flags
+        if arg in ["--permission-mode", "-permission-mode"]:
+            if i + 1 < len(raw_args):
+                val = raw_args[i+1].lower()
+                if val == "bypass":
+                    filtered_args.append("--dangerously-skip-permissions")
+                elif val in ["plan", "accept-edits"]:
+                    filtered_args.extend(["--mode", val])
+                elif val in ["auto"]:
+                    filtered_args.extend(["--mode", "accept-edits"])
+                i += 2
+                continue
+            i += 1
+            continue
+        
+        if arg.startswith("--permission-mode=") or arg.startswith("-permission-mode="):
+            val = arg.split("=", 1)[1].lower()
+            if val == "bypass":
+                filtered_args.append("--dangerously-skip-permissions")
+            elif val in ["plan", "accept-edits"]:
+                filtered_args.extend(["--mode", val])
+            elif val in ["auto"]:
+                filtered_args.extend(["--mode", "accept-edits"])
+            i += 1
+            continue
+
         # Track output-format flag
         if arg in ["--output-format", "-o"]:
             has_output_format = True
