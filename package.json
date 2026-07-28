@@ -20,6 +20,10 @@
   "author": "Andrew Fuller",
   "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "dependencies": {},
   "engines": {
     "node": ">=18.0.0"
