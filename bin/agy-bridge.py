@@ -6,11 +6,27 @@ Handles flag normalization, background auto-syncing of newly released Gemini mod
 
 import sys
 import os
+import signal
 import subprocess
 import json
 import time
 import threading
 from pathlib import Path
+
+# Unbuffer stdout/stderr to ensure real-time streaming to Paseo
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
+
+# Graceful signal handling for early termination/cancellation
+def handle_signal(sig, frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGTERM, handle_signal)
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
 
 def resolve_agy_bin():
     if "AGY_BIN" in os.environ and os.path.exists(os.environ["AGY_BIN"]):
@@ -27,6 +43,7 @@ def resolve_agy_bin():
             return c
     return "agy"
 
+
 def auto_sync_models_async(agy_bin):
     def sync():
         try:
@@ -41,7 +58,7 @@ def auto_sync_models_async(agy_bin):
             last_sync = provider.get("_last_model_sync", 0)
             now = int(time.time())
             
-            # Sync at most once every 24 hours
+            # Auto-sync at most once every 24 hours
             if now - last_sync < 86400:
                 return
             
@@ -71,23 +88,29 @@ def auto_sync_models_async(agy_bin):
     t = threading.Thread(target=sync, daemon=True)
     t.start()
 
-def main():
-    agy_bin = resolve_agy_bin()
-    auto_sync_models_async(agy_bin)
 
-    raw_args = sys.argv[1:]
+def normalize_args(raw_args):
     filtered_args = []
     i = 0
     has_output_format = False
 
     while i < len(raw_args):
         arg = raw_args[i]
+        
+        # Strip verbose flag
         if arg in ["-verbose", "--verbose"]:
             i += 1
             continue
+        
+        # Strip input-format flag (space-separated or '=' separated)
         if arg in ["-input-format", "--input-format"]:
             i += 2
             continue
+        if arg.startswith("-input-format=") or arg.startswith("--input-format="):
+            i += 1
+            continue
+        
+        # Track output-format flag
         if arg in ["--output-format", "-o"]:
             has_output_format = True
             filtered_args.append(arg)
@@ -97,15 +120,42 @@ def main():
                 continue
             i += 1
             continue
+        if arg.startswith("--output-format="):
+            has_output_format = True
+            filtered_args.append(arg)
+            i += 1
+            continue
+
         filtered_args.append(arg)
         i += 1
+
+    return filtered_args, has_output_format
+
+
+def main():
+    agy_bin = resolve_agy_bin()
+    auto_sync_models_async(agy_bin)
+
+    raw_args = sys.argv[1:]
+    filtered_args, has_output_format = normalize_args(raw_args)
 
     cmd = [agy_bin]
     if not has_output_format:
         cmd.extend(["--output-format", "stream-json"])
 
     cmd.extend(filtered_args)
-    os.execv(cmd[0], cmd)
+
+    # POSIX process replacement for maximum performance and zero memory overhead
+    if sys.platform != "win32":
+        try:
+            os.execv(cmd[0], cmd)
+        except OSError:
+            pass
+
+    # Windows fallback
+    proc = subprocess.run(cmd)
+    sys.exit(proc.returncode)
+
 
 if __name__ == "__main__":
     main()
